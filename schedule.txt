@@ -3,56 +3,38 @@ SCHEDULE 22.04.2026 (UTC+2)
 BEFORE CHECK NOTES + GOALS
 
 13-00  win  €20  hko  300 g
+13-30  win  €20  hko  5k g
 
 14-00  win  €50  ko  10k g
 
-15-00  gg   $25  40k g
-15-45  win  €50  m  2k g
-
-16-00  gg   $20  1k g
 16-00  win  €20  ko  4k g
-16-00  win  €20  hy  100 g
 16-05  gg   $54  ko  45k g
-16-15  gg   $32  tko  15k g
-16-30  gg   $22  ko  2k g
 16-30  gg   $88  ko  50k g
 16-30  win  €50  ko  20k g
-16-40  win  €20  hy  100 g
 
 17-00  gg   $25  ko  100k g
 17-00  win  €20  ko  5k g
 17-05  gg   $44  22k g
-17-15  gg   $50  1k g
 17-15  gg   $22  tko  25k g
-17-15  win  €50  250 g
 17-30  gg   $44  ko  75k g
 17-30  gg   $32  ko  1k g
 17-30  win  €50  tko  2k g
 17-30  win  €20  ko  20k g
-17-30  win  €50  hko  2k g
-17-45  gg   $100  hy  6k g
-17-45  gg   $30  hy  7k g
 
 18-00  gg   $30  750 g
 18-00  win  €20  m  4k g
-18-00  win  €50  hy  250 g
 18-00  win  €50  ko  15k g
-18-00  win  €20  hy  100 g
 18-00  win  €100  ko  12k g
 18-05  gg   $88  20k g
-18-10  gg   $32  ko  10k g
+18-15  gg   $32  tko  20k g
 18-15  gg   $30  1k g
 18-15  gg   $100  2k g
-18-15  gg   $32  tko  20k g
 18-15  win  €20  hko  200 g
 18-30  gg   $22  ko  4k g
 18-30  gg   $54  ko  250k g
-18-30  win  €20  hy  100 g
-18-30  win  €50  250 g
-18-30  win  €50  hy  250 g
-18-40  win  €20  hy  100 g
-18-45  gg   $88  hy  10k g
+18-30  win  €20  hko  5k g
 18-45  gg   $20  hy  7k g
+18-45  gg   $88  hy  10k g
 
 19-00  gg   $20  7k g
 19-00  gg   $25  45k g
@@ -60,44 +42,40 @@ BEFORE CHECK NOTES + GOALS
 19-00  win  €250  ko  25k g
 19-00  win  €20  ko  20k g
 19-05  gg   $20  3k g
-19-15  gg   $50  1k g
 19-15  gg   $88  tko  22k g
+19-15  gg   $50  1k g
 19-15  win  €20  tko  2k g
 19-30  gg   $25  ko  100k g
 19-30  gg   $54  ko  2k g
 19-30  win  €50  ko  50k g
-19-30  win  €50  hy  250 g
 19-45  gg   $50  hy  7k g
 19-45  win  €20  ko  250 g
 
 20-00  win  €100  ko  20k g
-20-00  win  €20  hy  100 g
-20-00  win  €20  125 g
-20-00  win  €50  250 g
 20-05  gg   $20  3k g
 20-10  gg   $32  ko  10k g
-20-15  gg   $80  1k g
 20-15  gg   $54  tko  40k g
+20-15  gg   $80  1k g
 20-15  win  €20  ko  18k g
 20-30  gg   $32  ko  2k g
 20-30  win  €50  ko  20k g
-20-40  win  €20  hy  100 g
 20-45  gg   $80  hy  7k g
 20-45  gg   $20  hy  20k g
 20-45  win  €20  3k g
 
-21-00  gg   $20  1k g
 21-00  gg   $25  ko  50k g
+21-00  gg   $20  1k g
 21-00  win  €250  ko  10k g
 21-05  gg   $55  20k g
 21-10  gg   $22  ko  10k g
-21-15  gg   $50  2k g
 21-15  gg   $88  tko  12k g
+21-15  gg   $50  2k g
 21-15  win  €20  tko  20k g
 21-30  gg   $32  ko  40k g
 21-30  win  €50  tko  25k g
-21-45  gg   $50  hy  8k g
 21-45  gg   $22  ko  20k g
+21-45  gg   $50  hy  8k g
+21-45  win  €20  hko  12k g
 
 22-00  gg   $30  2k g
 22-00  win  €20  tko  2k g
@@ -112,13 +90,29 @@ BEFORE CHECK NOTES + GOALS
 22-45  gg   $20  hy  10k g
 22-45  gg   $100  hy  7k g
 
-23-00  gg   $50  1k g
 23-00  gg   $25  tko  40k g
+23-00  gg   $50  1k g
 23-00  win  €50  2k g
 23-00  win  €20  tko  20k g
 23-00  win  €100  m  2k g
 23-00  win  €50  tko  5k g
 23-15  gg   $50  1k g
 23-30  gg   $22  ko  2k g
+23-30  win  €50  hko  10k g
 23-45  gg   $50  hy  7k g
 23-45  gg   $20  hy  15k g
+23-45  win  €20  hko  10k g
+
+00-00  gg   $66  tko  40k g
+00-00  gg   $20  1k g
+00-00  win  €50  hko  20k g
+00-00  win  €20  tko  10k g
+00-10  gg   $54  ko  10k g
+00-15  gg   $30  1k g
+00-15  win  €20  m  2k g
+00-30  gg   $55  ko  30k g
+00-30  win  €20  hko  6k g
+00-45  gg   $20  hy  6k g
+00-45  gg   $54  ko  15k g
+00-45  gg   $80  hy  6k g
+00-45  win  €50  hko  10k g

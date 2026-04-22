@@ -1,0 +1,35 @@
+SCHEDULE 22.04.2026 (UTC+2)
+
+BEFORE CHECK NOTES + GOALS
+
+02-00  win  €20
+
+12-30  win  €15  ko  3k g
+
+13-00  gg   €888  250k g
+13-05  gg   $88  15k g
+
+14-00  gg   €2026  300k g
+14-00  gg   €388  500k g
+14-05  gg   $30  7k g
+14-15  gg   $88  tko  10k g
+14-30  gg   $25  ko  60k g
+14-30  gg   $54  ko  1k g
+14-30  gg   €220  ko  125k g
+
+15-00  gg   $25  40k g
+15-00  gg   $40  1k g
+15-00  win  €20  ko  10k g
+15-05  gg   €88  40k g
+15-15  gg   $50  1k g
+15-15  gg   $54  tko  20k g
+15-30  gg   $32  ko  1k g
+15-30  gg   €550  ko  100k g
+15-30  win  €25  ko  10k g
+15-45  gg   $20  hy  6k g
+15-45  gg   $80  hy  4k g
+
+16-00  gg   $20  1k g
+16-00  win  €30  ko  20k g
+16-05  gg   €220  60k g
+16-05  gg   $54  ko  45k g

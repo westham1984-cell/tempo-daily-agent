@@ -1,4 +1,4 @@
-name: CoinGecko Daily Report
+name: Daily Reports
 
 on:
   schedule:
@@ -13,15 +13,12 @@ jobs:
         run: curl -fsSL https://tempo.xyz/install | bash
 
       - name: Restore wallet keys
+        env:
+          TEMPO_KEYS_TOML: ${{ secrets.TEMPO_KEYS_TOML }}
         run: |
           mkdir -p ~/.tempo/wallet
-          cat << 'KEYS' > ~/.tempo/wallet/keys.toml
-          ${{ secrets.TEMPO_KEYS_TOML }}
-          KEYS
+          printf '%s' "$TEMPO_KEYS_TOML" > ~/.tempo/wallet/keys.toml
           chmod 600 ~/.tempo/wallet/keys.toml
-
-      - name: Verify wallet
-        run: ~/.tempo/bin/tempo wallet whoami -j
 
       - name: Fetch top gainers & losers
         run: |
@@ -32,18 +29,52 @@ jobs:
             --json '{"vs_currency":"usd","duration":"24h","top_coins":"300"}' \
             -o "reports/movers-${DATE}.json"
 
-      - name: Show summary
+      - name: Show CoinGecko summary
         run: |
           DATE=$(date +%F)
           echo "## TOP GAINERS (24h)" >> $GITHUB_STEP_SUMMARY
-          jq -r '.data.top_gainers[:5][] | "| \(.symbol | ascii_upcase) | +\(.usd_24h_change | . * 100 | round / 100)% | $\(.usd) |"' reports/movers-${DATE}.json >> $GITHUB_STEP_SUMMARY
+          echo "| Coin | Change | Price |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          jq -r '.data.top_gainers[:5][] | "| \(.symbol | ascii_upcase) | +\(.usd_24h_change | tostring | .[0:6])% | $\(.usd) |"' reports/movers-${DATE}.json >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## TOP LOSERS (24h)" >> $GITHUB_STEP_SUMMARY
-          jq -r '.data.top_losers[:5][] | "| \(.symbol | ascii_upcase) | \(.usd_24h_change | . * 100 | round / 100)% | $\(.usd) |"' reports/movers-${DATE}.json >> $GITHUB_STEP_SUMMARY
+          echo "| Coin | Change | Price |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          jq -r '.data.top_losers[:5][] | "| \(.symbol | ascii_upcase) | \(.usd_24h_change | tostring | .[0:7])% | $\(.usd) |"' reports/movers-${DATE}.json >> $GITHUB_STEP_SUMMARY
 
-      - name: Upload report
+      - name: Upload CoinGecko report
         uses: actions/upload-artifact@v4
         with:
-          name: movers-${{ github.run_id }}
+          name: coingecko-${{ github.run_id }}
           path: reports/
+          retention-days: 30
+
+  poker-schedule:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate poker schedule
+        env:
+          POCARR_LOGIN: ${{ secrets.POCARR_LOGIN }}
+          POCARR_PASSWORD: ${{ secrets.POCARR_PASSWORD }}
+        run: |
+          mkdir -p reports
+          python3 generate_schedule.py > reports/schedule-$(date +%F).txt
+          echo "=== GENERATED SCHEDULE ==="
+          cat reports/schedule-$(date +%F).txt
+
+      - name: Show schedule summary
+        run: |
+          DATE=$(date +%F)
+          echo "## Poker Schedule ${DATE}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat reports/schedule-${DATE}.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload schedule
+        uses: actions/upload-artifact@v4
+        with:
+          name: schedule-${{ github.run_id }}
+          path: reports/schedule-*.txt
           retention-days: 30

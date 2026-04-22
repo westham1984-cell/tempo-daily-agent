@@ -1,0 +1,49 @@
+name: CoinGecko Daily Report
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  coingecko-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Tempo CLI
+        run: curl -fsSL https://tempo.xyz/install | bash
+
+      - name: Restore wallet keys
+        run: |
+          mkdir -p ~/.tempo/wallet
+          cat << 'KEYS' > ~/.tempo/wallet/keys.toml
+          ${{ secrets.TEMPO_KEYS_TOML }}
+          KEYS
+          chmod 600 ~/.tempo/wallet/keys.toml
+
+      - name: Verify wallet
+        run: ~/.tempo/bin/tempo wallet whoami -j
+
+      - name: Fetch top gainers & losers
+        run: |
+          mkdir -p reports
+          DATE=$(date +%F)
+          TEMPO_MAX_SPEND=1.00 ~/.tempo/bin/tempo request -X POST \
+            "https://coingecko.mpp.paywithlocus.com/coingecko/top-gainers-losers" \
+            --json '{"vs_currency":"usd","duration":"24h","top_coins":"300"}' \
+            -o "reports/movers-${DATE}.json"
+
+      - name: Show summary
+        run: |
+          DATE=$(date +%F)
+          echo "## TOP GAINERS (24h)" >> $GITHUB_STEP_SUMMARY
+          jq -r '.data.top_gainers[:5][] | "| \(.symbol | ascii_upcase) | +\(.usd_24h_change | . * 100 | round / 100)% | $\(.usd) |"' reports/movers-${DATE}.json >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## TOP LOSERS (24h)" >> $GITHUB_STEP_SUMMARY
+          jq -r '.data.top_losers[:5][] | "| \(.symbol | ascii_upcase) | \(.usd_24h_change | . * 100 | round / 100)% | $\(.usd) |"' reports/movers-${DATE}.json >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: movers-${{ github.run_id }}
+          path: reports/
+          retention-days: 30

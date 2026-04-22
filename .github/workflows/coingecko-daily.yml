@@ -5,6 +5,9 @@ on:
     - cron: '0 9 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   coingecko-report:
     runs-on: ubuntu-latest
@@ -59,22 +62,20 @@ jobs:
           POCARR_LOGIN: ${{ secrets.POCARR_LOGIN }}
           POCARR_PASSWORD: ${{ secrets.POCARR_PASSWORD }}
         run: |
-          mkdir -p reports
-          python3 generate_schedule.py > reports/schedule-$(date +%F).txt
-          echo "=== GENERATED SCHEDULE ==="
-          cat reports/schedule-$(date +%F).txt
+          python3 generate_schedule.py > schedule.txt
+          cat schedule.txt
 
       - name: Show schedule summary
         run: |
-          DATE=$(date +%F)
-          echo "## Poker Schedule ${DATE}" >> $GITHUB_STEP_SUMMARY
+          echo "## Poker Schedule $(date +%d.%m.%Y)" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          cat reports/schedule-${DATE}.txt >> $GITHUB_STEP_SUMMARY
+          cat schedule.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-      - name: Upload schedule
-        uses: actions/upload-artifact@v4
-        with:
-          name: schedule-${{ github.run_id }}
-          path: reports/schedule-*.txt
-          retention-days: 30
+      - name: Commit schedule to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add schedule.txt
+          git diff --cached --quiet && echo "No changes" || git commit -m "Update schedule $(date +%d.%m.%Y)"
+          git push

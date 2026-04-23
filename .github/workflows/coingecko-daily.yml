@@ -1,12 +1,9 @@
-name: Daily Reports
+name: CoinGecko Daily
 
 on:
   schedule:
     - cron: '0 9 * * *'
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 jobs:
   coingecko-report:
@@ -51,31 +48,3 @@ jobs:
           name: coingecko-${{ github.run_id }}
           path: reports/
           retention-days: 30
-
-  poker-schedule:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Generate poker schedule
-        env:
-          POCARR_LOGIN: ${{ secrets.POCARR_LOGIN }}
-          POCARR_PASSWORD: ${{ secrets.POCARR_PASSWORD }}
-        run: |
-          python3 generate_schedule.py > schedule.txt
-          cat schedule.txt
-
-      - name: Show schedule summary
-        run: |
-          echo "## Poker Schedule $(date +%d.%m.%Y)" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat schedule.txt >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Commit schedule to repo
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add schedule.txt
-          git diff --cached --quiet && echo "No changes" || git commit -m "Update schedule $(date +%d.%m.%Y)"
-          git push

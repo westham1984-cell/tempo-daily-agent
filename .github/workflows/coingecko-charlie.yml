@@ -26,8 +26,7 @@ jobs:
 
       - name: Fetch top gainers & losers
         env:
-          HTTPS_PROXY: ${{ secrets.CHARLIE_PROXY }}
-          HTTP_PROXY: ${{ secrets.CHARLIE_PROXY }}
+          ALL_PROXY: ${{ secrets.CHARLIE_PROXY }}
         run: |
           mkdir -p reports
           DATE=$(date +%F)

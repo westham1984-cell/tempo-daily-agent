@@ -1,0 +1,46 @@
+name: CoinGecko Daily - alpha
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  coingecko-report:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Install Tempo CLI
+        run: curl -fsSL https://tempo.xyz/install | bash
+
+      - name: Restore wallet keys
+        env:
+          TEMPO_KEYS_TOML: ${{ secrets.ALPHA_KEYS_TOML }}
+        run: |
+          mkdir -p ~/.tempo/wallet
+          printf '%s' "$TEMPO_KEYS_TOML" > ~/.tempo/wallet/keys.toml
+          chmod 600 ~/.tempo/wallet/keys.toml
+
+      - name: Fetch top gainers & losers
+        env:
+          HTTPS_PROXY: ${{ secrets.ALPHA_PROXY }}
+          HTTP_PROXY: ${{ secrets.ALPHA_PROXY }}
+        run: |
+          mkdir -p reports
+          DATE=$(date +%F)
+          TEMPO_MAX_SPEND=1.00 ~/.tempo/bin/tempo request -X POST             "https://coingecko.mpp.paywithlocus.com/coingecko/top-gainers-losers"             --json '{"vs_currency":"usd","duration":"24h","top_coins":"300"}'             -o "reports/alpha-movers-${DATE}.json"
+
+      - name: Show summary
+        run: |
+          DATE=$(date +%F)
+          echo "## ALPHA TOP GAINERS (24h)" >> $GITHUB_STEP_SUMMARY
+          echo "| Coin | Change | Price |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          jq -r '.data.top_gainers[:5][] | "| \(.symbol | ascii_upcase) | +\(.usd_24h_change | tostring | .[0:6])% | $\(.usd) |"'             "reports/alpha-movers-${DATE}.json" >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpha-coingecko-${{ github.run_id }}
+          path: reports/
+          retention-days: 30

@@ -21,6 +21,9 @@ jobs:
           printf '%s' "$TEMPO_KEYS_TOML" > ~/.tempo/wallet/keys.toml
           chmod 600 ~/.tempo/wallet/keys.toml
 
+      - name: Install tempo-request extension
+        run: ~/.tempo/bin/tempo add request
+
       - name: Fetch top gainers & losers
         env:
           HTTPS_PROXY: ${{ secrets.ALPHA_PROXY }}

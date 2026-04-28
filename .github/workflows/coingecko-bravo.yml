@@ -26,11 +26,24 @@ jobs:
 
       - name: Fetch top gainers & losers
         env:
-          ALL_PROXY: ${{ secrets.BRAVO_PROXY }}
+          SOCKS5_PROXY: ${{ secrets.BRAVO_PROXY }}
         run: |
+          sudo apt-get install -y proxychains4 -q 2>/dev/null
+          PROXY="${SOCKS5_PROXY#socks5://}"
+          PUSER="${PROXY%%:*}"
+          REST="${PROXY#*:}"
+          PPASS="${REST%%@*}"
+          PHOSTPORT="${REST#*@}"
+          PHOST="${PHOSTPORT%%:*}"
+          PPORT="${PHOSTPORT##*:}"
+          printf 'strict_chain\nproxy_dns\nquiet_mode\n[ProxyList]\nsocks5  %s  %s  %s  %s\n' \
+            "$PHOST" "$PPORT" "$PUSER" "$PPASS" | sudo tee /etc/proxychains4.conf > /dev/null
           mkdir -p reports
           DATE=$(date +%F)
-          TEMPO_MAX_SPEND=1.00 ~/.tempo/bin/tempo request -X POST             "https://coingecko.mpp.paywithlocus.com/coingecko/top-gainers-losers"             --json '{"vs_currency":"usd","duration":"24h","top_coins":"300"}'             -o "reports/bravo-movers-${DATE}.json"
+          TEMPO_MAX_SPEND=1.00 proxychains4 ~/.tempo/bin/tempo request -X POST \
+            "https://coingecko.mpp.paywithlocus.com/coingecko/top-gainers-losers" \
+            --json '{"vs_currency":"usd","duration":"24h","top_coins":"300"}' \
+            -o "reports/bravo-movers-${DATE}.json"
 
       - name: Show summary
         run: |
@@ -38,7 +51,8 @@ jobs:
           echo "## BRAVO TOP GAINERS (24h)" >> $GITHUB_STEP_SUMMARY
           echo "| Coin | Change | Price |" >> $GITHUB_STEP_SUMMARY
           echo "|------|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          jq -r '.data.top_gainers[:5][] | "| \(.symbol | ascii_upcase) | +\(.usd_24h_change | tostring | .[0:6])% | $\(.usd) |"'             "reports/bravo-movers-${DATE}.json" >> $GITHUB_STEP_SUMMARY || true
+          jq -r '.data.top_gainers[:5][] | "| \(.symbol | ascii_upcase) | +\(.usd_24h_change | tostring | .[0:6])% | $\(.usd) |"' \
+            "reports/bravo-movers-${DATE}.json" >> $GITHUB_STEP_SUMMARY || true
 
       - name: Upload report
         uses: actions/upload-artifact@v4

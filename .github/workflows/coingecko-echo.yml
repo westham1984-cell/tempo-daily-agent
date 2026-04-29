@@ -40,10 +40,17 @@ jobs:
             "$PHOST" "$PPORT" "$PUSER" "$PPASS" | sudo tee /etc/proxychains4.conf > /dev/null
           mkdir -p reports
           DATE=$(date +%F)
-          TEMPO_MAX_SPEND=1.00 proxychains4 ~/.tempo/bin/tempo request -X POST \
-            "https://coingecko.mpp.paywithlocus.com/coingecko/top-gainers-losers" \
-            --json '{"vs_currency":"usd","duration":"24h","top_coins":"300"}' \
-            -o "reports/echo-movers-${DATE}.json"
+          for attempt in 1 2 3; do
+              echo "Attempt $attempt/3..."
+              if TEMPO_MAX_SPEND=1.00 proxychains4 ~/.tempo/bin/tempo request -X POST \
+                  "https://coingecko.mpp.paywithlocus.com/coingecko/top-gainers-losers" \
+                  --json '{"vs_currency":"usd","duration":"24h","top_coins":"300"}' \
+                  -o "reports/echo-movers-${DATE}.json"; then
+                break
+              fi
+              [ $attempt -lt 3 ] && sleep 30
+          done
+          [ -f "reports/echo-movers-${DATE}.json" ]
 
       - name: Show summary
         run: |

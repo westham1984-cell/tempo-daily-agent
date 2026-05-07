@@ -11,6 +11,8 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Install Tempo CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: curl -fsSL https://tempo.xyz/install | bash
 
       - name: Restore wallet keys

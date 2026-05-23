@@ -20,6 +20,10 @@ jobs:
         env:
           TEMPO_KEYS_TOML: ${{ secrets.TEMPO_KEYS_TOML }}
         run: |
+          if [ -z "$TEMPO_KEYS_TOML" ]; then
+            echo "::error::TEMPO_KEYS_TOML secret is empty"
+            exit 1
+          fi
           mkdir -p ~/.tempo/wallet
           printf '%s' "$TEMPO_KEYS_TOML" > ~/.tempo/wallet/keys.toml
           chmod 600 ~/.tempo/wallet/keys.toml
@@ -50,11 +54,17 @@ jobs:
           DATE=$(date +%F)
           for attempt in 1 2 3; do
             echo "Attempt $attempt/3..."
-            if TEMPO_MAX_SPEND=1.00 $RUN_PREFIX ~/.tempo/bin/tempo request -X POST \
+            if OUTPUT=$(TEMPO_MAX_SPEND=1.00 $RUN_PREFIX ~/.tempo/bin/tempo request -X POST \
               "https://coingecko.mpp.paywithlocus.com/coingecko/top-gainers-losers" \
               --json '{"vs_currency":"usd","duration":"24h","top_coins":"300"}' \
-              -o "reports/movers-${DATE}.json"; then
+              -o "reports/movers-${DATE}.json" 2>&1); then
               break
+            fi
+            echo "$OUTPUT"
+            if echo "$OUTPUT" | grep -qE '"code":"E_PAYMENT"|"code":"E_USAGE"'; then
+              MSG=$(echo "$OUTPUT" | grep -oP '(?<="message":")[^"]*' | head -1)
+              echo "::error::$MSG"
+              exit 1
             fi
             [ $attempt -lt 3 ] && sleep 30
           done

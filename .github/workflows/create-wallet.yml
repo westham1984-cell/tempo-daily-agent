@@ -19,14 +19,16 @@ jobs:
 
       - name: Login — open URL in Afina profile within 2 min
         run: |
+          source ~/.tempo/env
           PROFILE="${{ github.event.inputs.profile }}"
+          TEMPO_BIN="$(which tempo)"
           mkdir -p ~/.tempo-profiles/${PROFILE}/.tempo/wallet
           export HOME=~/.tempo-profiles/${PROFILE}
           echo "=========================================="
           echo "  PROFILE: ${PROFILE}"
           echo "  Open the URL below in Afina profile"
           echo "=========================================="
-          ~/.tempo/bin/tempo wallet login 2>&1
+          $TEMPO_BIN wallet login 2>&1
 
       - name: Show keys.toml
         if: success()

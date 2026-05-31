@@ -3,10 +3,10 @@ on:
   workflow_dispatch:
     inputs:
       profile:
-        description: 'Profile name (alpha/bravo/charlie/delta/echo/foxtrot)'
+        description: 'Profile name'
         required: true
         type: choice
-        options: [alpha, bravo, charlie, delta, echo, foxtrot]
+        options: [foxtrot, golf, hotel, india, juliet, kilo]
 
 jobs:
   create:

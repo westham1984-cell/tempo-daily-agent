@@ -1,0 +1,47 @@
+name: Create Tempo Wallet
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Profile name (alpha/bravo/charlie/delta/echo/foxtrot)'
+        required: true
+        type: choice
+        options: [alpha, bravo, charlie, delta, echo, foxtrot]
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Tempo CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: curl -fsSL https://tempo.xyz/install | bash
+
+      - name: Login — open URL in Afina profile within 2 min
+        run: |
+          PROFILE="${{ github.event.inputs.profile }}"
+          mkdir -p ~/.tempo-profiles/${PROFILE}/.tempo/wallet
+          export HOME=~/.tempo-profiles/${PROFILE}
+          echo "=========================================="
+          echo "  PROFILE: ${PROFILE}"
+          echo "  Open the URL below in Afina profile"
+          echo "=========================================="
+          ~/.tempo/bin/tempo wallet login 2>&1
+
+      - name: Show keys.toml
+        if: success()
+        run: |
+          PROFILE="${{ github.event.inputs.profile }}"
+          echo "=========================================="
+          echo "  COPY THIS TO SECRET: ${PROFILE^^}_KEYS_TOML"
+          echo "=========================================="
+          cat ~/.tempo-profiles/${PROFILE}/.tempo/wallet/keys.toml
+          echo "=========================================="
+
+      - name: Upload keys as artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: keys-${{ github.event.inputs.profile }}
+          path: ~/.tempo-profiles/${{ github.event.inputs.profile }}/.tempo/wallet/keys.toml
+          retention-days: 1

@@ -13,14 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
+      issues: write
     steps:
       - name: Install Tempo CLI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: curl -fsSL https://tempo.xyz/install | bash
 
-      - name: Login — capture URL and push to variable
+      - name: Login — publish URL via issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -31,39 +31,36 @@ jobs:
           REAL_HOME="$HOME"
           export HOME=~/.tempo-profiles/${PROFILE}
 
-          # Run login in background, capture output
           $TEMPO_BIN wallet login > /tmp/login.log 2>&1 &
           LOGIN_PID=$!
 
-          # Watch for URL to appear, push to GitHub variable
           for i in $(seq 1 60); do
             URL=$(grep -oE 'https://[^[:space:]]+' /tmp/login.log | head -1)
             if [ -n "$URL" ]; then
-              echo "AUTH URL found: $URL"
-              HOME="$REAL_HOME" gh variable set WALLET_AUTH_URL \
+              echo "AUTH URL: $URL"
+              HOME="$REAL_HOME" gh issue create \
+                --title "WALLET-AUTH-${PROFILE}-${{ github.run_id }}" \
                 --body "$URL" \
-                --repo westham1984-cell/tempo-daily-agent
+                --repo westham1984-cell/tempo-daily-agent || true
               break
             fi
             sleep 1
           done
 
-          # Wait for login to complete
-          wait $LOGIN_PID || true
+          wait $LOGIN_PID
+          echo "=== login.log ==="
           cat /tmp/login.log
 
       - name: Show keys.toml
-        if: success()
         run: |
           PROFILE="${{ github.event.inputs.profile }}"
           echo "=========================================="
-          echo "  COPY THIS TO SECRET: ${PROFILE^^}_KEYS_TOML"
+          echo "SECRET NAME: ${PROFILE^^}_KEYS_TOML"
           echo "=========================================="
           cat ~/.tempo-profiles/${PROFILE}/.tempo/wallet/keys.toml
           echo "=========================================="
 
       - name: Upload keys as artifact
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: keys-${{ github.event.inputs.profile }}

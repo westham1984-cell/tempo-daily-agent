@@ -11,24 +11,46 @@ on:
 jobs:
   create:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     steps:
       - name: Install Tempo CLI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: curl -fsSL https://tempo.xyz/install | bash
 
-      - name: Login — open URL in Afina profile within 2 min
+      - name: Login — capture URL and push to variable
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           source ~/.tempo/env
           PROFILE="${{ github.event.inputs.profile }}"
           TEMPO_BIN="$(which tempo)"
           mkdir -p ~/.tempo-profiles/${PROFILE}/.tempo/wallet
+          REAL_HOME="$HOME"
           export HOME=~/.tempo-profiles/${PROFILE}
-          echo "=========================================="
-          echo "  PROFILE: ${PROFILE}"
-          echo "  Open the URL below in Afina profile"
-          echo "=========================================="
-          $TEMPO_BIN wallet login 2>&1
+
+          # Run login in background, capture output
+          $TEMPO_BIN wallet login > /tmp/login.log 2>&1 &
+          LOGIN_PID=$!
+
+          # Watch for URL to appear, push to GitHub variable
+          for i in $(seq 1 60); do
+            URL=$(grep -oE 'https://[^[:space:]]+' /tmp/login.log | head -1)
+            if [ -n "$URL" ]; then
+              echo "AUTH URL found: $URL"
+              HOME="$REAL_HOME" gh variable set WALLET_AUTH_URL \
+                --body "$URL" \
+                --repo westham1984-cell/tempo-daily-agent
+              break
+            fi
+            sleep 1
+          done
+
+          # Wait for login to complete
+          wait $LOGIN_PID || true
+          cat /tmp/login.log
 
       - name: Show keys.toml
         if: success()

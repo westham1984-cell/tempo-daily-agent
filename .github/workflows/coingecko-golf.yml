@@ -1,0 +1,76 @@
+name: CoinGecko Daily - golf
+on:
+  schedule:
+    - cron: "47 10 * * *"
+  workflow_dispatch:
+
+jobs:
+  coingecko-report:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Install Tempo CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: curl -fsSL https://tempo.xyz/install | bash
+
+      - name: Restore wallet keys
+        env:
+          TEMPO_KEYS_TOML: ${{ secrets.GOLF_KEYS_TOML }}
+        run: |
+          if [ -z "$TEMPO_KEYS_TOML" ]; then
+            echo "::error::TEMPO_KEYS_TOML secret is empty"
+            exit 1
+          fi
+          mkdir -p ~/.tempo/wallet
+          printf '%s' "$TEMPO_KEYS_TOML" > ~/.tempo/wallet/keys.toml
+          chmod 600 ~/.tempo/wallet/keys.toml
+
+      - name: Install tempo-request extension
+        run: ~/.tempo/bin/tempo add request
+
+      - name: Fetch top gainers & losers
+        env:
+          SOCKS5_PROXY: ${{ secrets.GOLF_PROXY }}
+        run: |
+          sudo apt-get install -y proxychains4 -q 2>/dev/null
+          PROXY="${SOCKS5_PROXY#socks5://}"
+          PUSER="${PROXY%%:*}"
+          REST="${PROXY#*:}"
+          PPASS="${REST%%@*}"
+          PHOSTPORT="${REST#*@}"
+          PHOST="${PHOSTPORT%%:*}"
+          PPORT="${PHOSTPORT##*:}"
+          printf 'strict_chain\nproxy_dns\nquiet_mode\n[ProxyList]\nsocks5  %s  %s  %s  %s\n'             "$PHOST" "$PPORT" "$PUSER" "$PPASS" | sudo tee /etc/proxychains4.conf > /dev/null
+          mkdir -p reports
+          DATE=$(date +%F)
+          for attempt in 1 2 3; do
+              echo "Attempt $attempt/3..."
+              if OUTPUT=$(TEMPO_MAX_SPEND=1.00 proxychains4 ~/.tempo/bin/tempo request -X POST                   "https://coingecko.mpp.paywithlocus.com/coingecko/top-gainers-losers"                   --json '{"vs_currency":"usd","duration":"24h","top_coins":"300"}'                   -o "reports/golf-movers-${DATE}.json" 2>&1); then
+                break
+              fi
+              echo "$OUTPUT"
+              if echo "$OUTPUT" | grep -qE '"code":"E_PAYMENT"|"code":"E_USAGE"'; then
+                MSG=$(echo "$OUTPUT" | grep -oP '(?<="message":")[^"]*' | head -1)
+                echo "::error::$MSG"
+                exit 1
+              fi
+              [ $attempt -lt 3 ] && sleep 30
+          done
+          [ -f "reports/golf-movers-${DATE}.json" ]
+
+      - name: Show summary
+        run: |
+          DATE=$(date +%F)
+          echo "## GOLF TOP GAINERS (24h)" >> $GITHUB_STEP_SUMMARY
+          echo "| Coin | Change | Price |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          jq -r '.data.top_gainers[:5][] | "| \(.symbol | ascii_upcase) | +\(.usd_24h_change | tostring | .[0:6])% | $\(.usd) |"'             "reports/golf-movers-${DATE}.json" >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: golf-coingecko-${{ github.run_id }}
+          path: reports/
+          retention-days: 30

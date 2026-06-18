@@ -28,7 +28,7 @@ jobs:
           chmod 600 ~/.tempo/wallet/keys.toml
 
       - name: Install tempo-request extension
-        run: ~/.tempo/bin/tempo add request
+        run: ~/.tempo/bin/tempo add request@v0.5.2
 
       - name: Fetch top gainers & losers
         env:

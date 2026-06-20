@@ -42,8 +42,15 @@ jobs:
           PHOSTPORT="${REST#*@}"
           PHOST="${PHOSTPORT%%:*}"
           PPORT="${PHOSTPORT##*:}"
+          echo "DEBUG: proxy host=$PHOST port=$PPORT user_len=${#PUSER} pass_len=${#PPASS}"
           printf 'strict_chain\nproxy_dns\nquiet_mode\n[ProxyList]\nsocks5  %s  %s  %s  %s\n' \
             "$PHOST" "$PPORT" "$PUSER" "$PPASS" | sudo tee /etc/proxychains4.conf > /dev/null
+          echo "DEBUG: proxychains4.conf content (password masked):"
+          sudo cat /etc/proxychains4.conf | sed "s/$PPASS/***PASS***/g"
+          echo "DEBUG: testing direct curl (no proxy)..."
+          curl -s --max-time 10 -o /dev/null -w "direct HTTP %{http_code}\n" https://coingecko.mpp.paywithlocus.com/coingecko/top-gainers-losers || echo "direct curl exit: $?"
+          echo "DEBUG: testing curl via proxychains (timeout 60s)..."
+          proxychains4 curl -s --max-time 60 -o /dev/null -w "proxy HTTP %{http_code}\n" https://coingecko.mpp.paywithlocus.com/coingecko/top-gainers-losers || echo "proxy curl exit: $?"
           mkdir -p reports
           DATE=$(date +%F)
           for attempt in 1 2 3; do

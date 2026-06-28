@@ -26,19 +26,15 @@ jobs:
         run: |
           source ~/.tempo/env
           PROFILE="${{ github.event.inputs.profile }}"
-          TEMPO_BIN="$(which tempo)"
-          mkdir -p ~/.tempo-profiles/${PROFILE}/.tempo/wallet
-          REAL_HOME="$HOME"
-          export HOME=~/.tempo-profiles/${PROFILE}
 
-          $TEMPO_BIN wallet login > /tmp/login.log 2>&1 &
+          tempo wallet login > /tmp/login.log 2>&1 &
           LOGIN_PID=$!
 
           for i in $(seq 1 60); do
             URL=$(grep -oE 'https://[^[:space:]]+' /tmp/login.log | head -1)
             if [ -n "$URL" ]; then
               echo "AUTH URL: $URL"
-              HOME="$REAL_HOME" gh issue create \
+              gh issue create \
                 --title "WALLET-AUTH-${PROFILE}-${{ github.run_id }}" \
                 --body "$URL" \
                 --repo westham1984-cell/tempo-daily-agent || true
@@ -57,12 +53,12 @@ jobs:
           echo "=========================================="
           echo "SECRET NAME: ${PROFILE^^}_KEYS_TOML"
           echo "=========================================="
-          cat ~/.tempo-profiles/${PROFILE}/.tempo/wallet/keys.toml
+          cat ~/.tempo/wallet/keys.toml
           echo "=========================================="
 
       - name: Upload keys as artifact
         uses: actions/upload-artifact@v4
         with:
           name: keys-${{ github.event.inputs.profile }}
-          path: ~/.tempo-profiles/${{ github.event.inputs.profile }}/.tempo/wallet/keys.toml
+          path: ~/.tempo/wallet/keys.toml
           retention-days: 1

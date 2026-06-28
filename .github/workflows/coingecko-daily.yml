@@ -16,6 +16,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: curl -fsSL https://tempo.xyz/install | bash
 
+      - name: Install extensions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          source ~/.tempo/env
+          tempo add wallet
+          tempo add request 0.5.2
+
       - name: Restore wallet keys
         env:
           TEMPO_KEYS_TOML: ${{ secrets.TEMPO_KEYS_TOML }}
@@ -27,14 +35,9 @@ jobs:
           mkdir -p ~/.tempo/wallet
           printf '%s' "$TEMPO_KEYS_TOML" > ~/.tempo/wallet/store.json
           chmod 600 ~/.tempo/wallet/store.json
-
-      - name: Install tempo-wallet and tempo-request extensions
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
+          echo "=== wallet check ==="
           source ~/.tempo/env
-          tempo add wallet
-          tempo add request 0.5.2
+          tempo wallet keys 2>&1 || true
 
       - name: Fetch top gainers & losers
         env:

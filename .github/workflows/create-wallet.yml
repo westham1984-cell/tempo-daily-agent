@@ -20,15 +20,20 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: curl -fsSL https://tempo.xyz/install | bash
 
-      - name: Login — publish URL via issue
+      - name: Install extensions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          source ~/.tempo/env
+          tempo add wallet
+          tempo add request
+
+      - name: Step 1 — Wallet login (publish URL via issue)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           source ~/.tempo/env
           PROFILE="${{ github.event.inputs.profile }}"
-
-          # snapshot before login
-          find /home/runner -newer /home/runner/.tempo/bin/tempo -not -path "*/proc/*" 2>/dev/null | sort > /tmp/before.txt
 
           tempo wallet login > /tmp/login.log 2>&1 &
           LOGIN_PID=$!
@@ -36,41 +41,69 @@ jobs:
           for i in $(seq 1 60); do
             URL=$(grep -oE 'https://[^[:space:]]+' /tmp/login.log | head -1)
             if [ -n "$URL" ]; then
-              echo "AUTH URL: $URL"
+              echo "WALLET AUTH URL: $URL"
               gh issue create \
-                --title "WALLET-AUTH-${PROFILE}-${{ github.run_id }}" \
-                --body "$URL" \
+                --title "STEP1-WALLET-AUTH-${PROFILE}-${{ github.run_id }}" \
+                --body "**Step 1 — Click to login wallet:**%0A%0A$URL" \
                 --repo westham1984-cell/tempo-daily-agent || true
               break
             fi
             sleep 1
           done
 
-          wait $LOGIN_PID || true
-          echo "=== login.log ==="
-          cat /tmp/login.log
+          wait $LOGIN_PID
+          echo "=== login.log ===" && cat /tmp/login.log
 
-          echo "=== new/modified files after login ==="
-          find /home/runner -newer /tmp/before.txt -not -path "*/proc/*" 2>/dev/null | sort
+      - name: Step 2 — Request key provisioning (publish URL via issue)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          source ~/.tempo/env
+          PROFILE="${{ github.event.inputs.profile }}"
 
-          echo "=== tempo dir full ==="
-          find /home/runner/.tempo -type f 2>/dev/null
+          tempo request -X POST \
+            "https://coingecko.mpp.paywithlocus.com/coingecko/top-gainers-losers" \
+            --json '{"vs_currency":"usd","duration":"24h","top_coins":"300"}' \
+            -o /tmp/test-report.json > /tmp/request.log 2>&1 &
+          REQ_PID=$!
 
-          echo "=== tempo wallet commands ==="
-          /home/runner/.tempo/bin/tempo wallet --help 2>&1 || true
+          for i in $(seq 1 60); do
+            URL=$(grep -oE 'https://wallet\.tempo\.xyz/api/auth/cli\?code=[^[:space:]]+' /tmp/request.log | tail -1)
+            if [ -n "$URL" ]; then
+              echo "REQUEST PROVISIONING URL: $URL"
+              gh issue create \
+                --title "STEP2-REQUEST-AUTH-${PROFILE}-${{ github.run_id }}" \
+                --body "**Step 2 — Click to authorize request key:**%0A%0A$URL" \
+                --repo westham1984-cell/tempo-daily-agent || true
+              break
+            fi
+            sleep 1
+          done
 
-      - name: Copy tempo dir for artifact
+          wait $REQ_PID
+          echo "=== request.log ===" && cat /tmp/request.log
+          echo "=== find new files ==="
+          find /home/runner/.tempo /home/runner/.local/share/tempo -type f 2>/dev/null
+          echo "=== store.json ==="
+          cat /home/runner/.tempo/wallet/store.json 2>/dev/null || echo "NOT FOUND"
+
+      - name: Show keys and upload artifact
         if: always()
         run: |
-          mkdir -p /tmp/tempo-export
-          cp -rp /home/runner/.tempo /tmp/tempo-export/ 2>/dev/null || true
-          ls -laR /tmp/tempo-export/
+          PROFILE="${{ github.event.inputs.profile }}"
+          echo "=========================================="
+          echo "SECRET: TEMPO_KEYS_TOML (or ${PROFILE^^}_KEYS_TOML)"
+          echo "=========================================="
+          cat /home/runner/.tempo/wallet/store.json 2>/dev/null || echo "store.json NOT FOUND"
+          echo "=========================================="
+          mkdir -p /tmp/keys-export
+          cp /home/runner/.tempo/wallet/store.json /tmp/keys-export/store.json 2>/dev/null || true
 
       - name: Upload keys as artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tempo-debug-${{ github.event.inputs.profile }}-${{ github.run_id }}
-          path: /tmp/tempo-export/
+          name: keys-${{ github.event.inputs.profile }}-${{ github.run_id }}
+          path: /tmp/keys-export/
           retention-days: 1
           include-hidden-files: true

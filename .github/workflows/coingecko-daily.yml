@@ -25,8 +25,8 @@ jobs:
             exit 1
           fi
           mkdir -p ~/.tempo/wallet
-          printf '%s' "$TEMPO_KEYS_TOML" > ~/.tempo/wallet/keys.toml
-          chmod 600 ~/.tempo/wallet/keys.toml
+          printf '%s' "$TEMPO_KEYS_TOML" > ~/.tempo/wallet/store.json
+          chmod 600 ~/.tempo/wallet/store.json
 
       - name: Install tempo-request extension
         run: ~/.tempo/bin/tempo add request 0.5.2

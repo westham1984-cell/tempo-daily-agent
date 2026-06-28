@@ -46,19 +46,18 @@ jobs:
           wait $LOGIN_PID
           echo "=== login.log ==="
           cat /tmp/login.log
-
-      - name: Show keys.toml
-        run: |
-          PROFILE="${{ github.event.inputs.profile }}"
-          echo "=========================================="
-          echo "SECRET NAME: ${PROFILE^^}_KEYS_TOML"
-          echo "=========================================="
-          cat ~/.tempo/wallet/keys.toml
-          echo "=========================================="
+          echo "=== find keys ==="
+          find /home/runner -name "*.toml" 2>/dev/null || true
+          find /home/runner -name "keys*" 2>/dev/null || true
+          find /tmp -name "*.toml" 2>/dev/null || true
+          echo "=== tempo dir ==="
+          ls -la /home/runner/.tempo/ 2>/dev/null || true
+          ls -la /home/runner/.tempo/wallet/ 2>/dev/null || true
 
       - name: Upload keys as artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: keys-${{ github.event.inputs.profile }}
-          path: ~/.tempo/wallet/keys.toml
+          name: tempo-debug-${{ github.event.inputs.profile }}
+          path: /home/runner/.tempo/
           retention-days: 1

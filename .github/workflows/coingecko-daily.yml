@@ -28,13 +28,19 @@ jobs:
           printf '%s' "$TEMPO_KEYS_TOML" > ~/.tempo/wallet/store.json
           chmod 600 ~/.tempo/wallet/store.json
 
-      - name: Install tempo-request extension
-        run: ~/.tempo/bin/tempo add request 0.5.2
+      - name: Install tempo-wallet and tempo-request extensions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          source ~/.tempo/env
+          tempo add wallet
+          tempo add request 0.5.2
 
       - name: Fetch top gainers & losers
         env:
           SOCKS5_PROXY: ${{ secrets.TEMPO_PROXY }}
         run: |
+          source ~/.tempo/env
           if [ -n "$SOCKS5_PROXY" ]; then
             sudo apt-get install -y proxychains4 -q 2>/dev/null
             PROXY="${SOCKS5_PROXY#socks5://}"
@@ -54,7 +60,7 @@ jobs:
           DATE=$(date +%F)
           for attempt in 1 2 3; do
             echo "Attempt $attempt/3..."
-            if OUTPUT=$(TEMPO_MAX_SPEND=1.00 $RUN_PREFIX ~/.tempo/bin/tempo request -X POST \
+            if OUTPUT=$(TEMPO_MAX_SPEND=1.00 $RUN_PREFIX tempo request -X POST \
               "https://coingecko.mpp.paywithlocus.com/coingecko/top-gainers-losers" \
               --json '{"vs_currency":"usd","duration":"24h","top_coins":"300"}' \
               -o "reports/movers-${DATE}.json" 2>&1); then

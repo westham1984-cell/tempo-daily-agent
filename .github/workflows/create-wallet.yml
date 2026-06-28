@@ -27,6 +27,9 @@ jobs:
           source ~/.tempo/env
           PROFILE="${{ github.event.inputs.profile }}"
 
+          # snapshot before login
+          find /home/runner -newer /home/runner/.tempo/bin/tempo -not -path "*/proc/*" 2>/dev/null | sort > /tmp/before.txt
+
           tempo wallet login > /tmp/login.log 2>&1 &
           LOGIN_PID=$!
 
@@ -43,21 +46,31 @@ jobs:
             sleep 1
           done
 
-          wait $LOGIN_PID
+          wait $LOGIN_PID || true
           echo "=== login.log ==="
           cat /tmp/login.log
-          echo "=== find keys ==="
-          find /home/runner -name "*.toml" 2>/dev/null || true
-          find /home/runner -name "keys*" 2>/dev/null || true
-          find /tmp -name "*.toml" 2>/dev/null || true
-          echo "=== tempo dir ==="
-          ls -la /home/runner/.tempo/ 2>/dev/null || true
-          ls -la /home/runner/.tempo/wallet/ 2>/dev/null || true
+
+          echo "=== new/modified files after login ==="
+          find /home/runner -newer /tmp/before.txt -not -path "*/proc/*" 2>/dev/null | sort
+
+          echo "=== tempo dir full ==="
+          find /home/runner/.tempo -type f 2>/dev/null
+
+          echo "=== tempo wallet commands ==="
+          /home/runner/.tempo/bin/tempo wallet --help 2>&1 || true
+
+      - name: Copy tempo dir for artifact
+        if: always()
+        run: |
+          mkdir -p /tmp/tempo-export
+          cp -rp /home/runner/.tempo /tmp/tempo-export/ 2>/dev/null || true
+          ls -laR /tmp/tempo-export/
 
       - name: Upload keys as artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tempo-debug-${{ github.event.inputs.profile }}
-          path: /home/runner/.tempo/
+          name: tempo-debug-${{ github.event.inputs.profile }}-${{ github.run_id }}
+          path: /tmp/tempo-export/
           retention-days: 1
+          include-hidden-files: true

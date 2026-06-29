@@ -6,7 +6,7 @@ on:
         description: 'Profile name'
         required: true
         type: choice
-        options: [daily, foxtrot, golf, hotel, india, juliet, kilo]
+        options: [alpha, bravo, daily, foxtrot, golf, hotel, india, juliet, kilo]
 
 jobs:
   create:

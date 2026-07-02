@@ -36,6 +36,7 @@ jobs:
         env:
           SOCKS5_PROXY: ${{ secrets.DELTA_PROXY }}
         run: |
+          source ~/.tempo/env
           sudo apt-get install -y proxychains4 -q 2>/dev/null
           PROXY="${SOCKS5_PROXY#socks5://}"
           PUSER="${PROXY%%:*}"

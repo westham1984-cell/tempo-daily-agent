@@ -30,17 +30,7 @@ jobs:
       - name: Install tempo extensions
         run: |
           ~/.tempo/bin/tempo add wallet
-          ~/.tempo/bin/tempo add request 0.5.2
-
-      - name: DEBUG wallet state
-        run: |
-          source ~/.tempo/env
-          echo "PATH=$PATH"
-          echo "--- ls ~/.tempo/wallet ---"; ls -la ~/.tempo/wallet
-          echo "--- store.json size ---"; wc -c ~/.tempo/wallet/store.json
-          echo "--- top-level json keys ---"; python3 -c "import json;d=json.load(open('$HOME/.tempo/wallet/store.json'));print(list(d.keys()));import sys;st=d.get('tempo-cli.store',{}).get('state',{});print('state keys:',list(st.keys()));print('accounts:',st.get('accounts'));print('active:',st.get('activeAccount'));print('nAccessKeys:',len(st.get('accessKeys',[])))" 2>&1 | sed -E 's/0x[0-9a-fA-F]{16,}/0x<hex>/g'
-          echo "--- tempo wallet whoami ---"; tempo wallet whoami 2>&1 | sed -E 's/0x[0-9a-fA-F]{16,}/0x<hex>/g' | head -30 || true
-          echo "--- tempo wallet keys ---"; tempo wallet keys 2>&1 | sed -E 's/0x[0-9a-fA-F]{16,}/0x<hex>/g' | head -30 || true
+          ~/.tempo/bin/tempo add request
 
       - name: Fetch top gainers & losers
         env:

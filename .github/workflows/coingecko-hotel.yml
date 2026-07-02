@@ -30,7 +30,7 @@ jobs:
       - name: Install tempo extensions
         run: |
           ~/.tempo/bin/tempo add wallet
-          ~/.tempo/bin/tempo add request 0.5.2
+          ~/.tempo/bin/tempo add request
 
       - name: Fetch top gainers & losers
         env:

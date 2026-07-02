@@ -32,6 +32,23 @@ jobs:
           ~/.tempo/bin/tempo add wallet
           ~/.tempo/bin/tempo add request
 
+      - name: DEBUG session/key state
+        env:
+          SOCKS5_PROXY: ${{ secrets.FOXTROT_PROXY }}
+        run: |
+          source ~/.tempo/env
+          R(){ sed -E 's/0x[0-9a-fA-F]{12,}/0x<hex>/g'; }
+          echo "### whoami";           tempo wallet whoami 2>&1 | R | head -25 || true
+          echo "### keys";             tempo wallet keys 2>&1 | R | head -30 || true
+          echo "### sessions list";    tempo wallet sessions list 2>&1 | R | head -30 || true
+          echo "### refresh (non-interactive?)"; timeout 40 tempo wallet refresh 2>&1 | R | head -20 || true
+          echo "### direct request (no proxy), full output";
+          sudo apt-get install -y proxychains4 -q 2>/dev/null || true
+          PROXY="${SOCKS5_PROXY#socks5://}"; PUSER="${PROXY%%:*}"; REST="${PROXY#*:}"; PPASS="${REST%%@*}"; PHOSTPORT="${REST#*@}"; PHOST="${PHOSTPORT%%:*}"; PPORT="${PHOSTPORT##*:}"
+          printf 'strict_chain\nproxy_dns\nquiet_mode\n[ProxyList]\nsocks5  %s  %s  %s  %s\n' "$PHOST" "$PPORT" "$PUSER" "$PPASS" | sudo tee /etc/proxychains4.conf > /dev/null
+          echo "--- try proxied request, full JSON ---"
+          timeout 60 bash -c 'TEMPO_MAX_SPEND=1.00 proxychains4 tempo request -X POST "https://coingecko.mpp.paywithlocus.com/coingecko/top-gainers-losers" --json "{\"vs_currency\":\"usd\",\"duration\":\"24h\",\"top_coins\":\"300\"}" -o /tmp/r.json' 2>&1 | R | head -40 || true
+
       - name: Fetch top gainers & losers
         env:
           SOCKS5_PROXY: ${{ secrets.FOXTROT_PROXY }}
